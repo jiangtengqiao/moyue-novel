@@ -1,0 +1,9 @@
+#!/bin/bash
+# 腾讯云 SCF Web 函数启动脚本
+# SCF 会执行此文件，启动 web 服务监听 9000 端口
+
+# 初始化数据库
+python3 -c "from database import init_db; from init_data import seed_data; init_db(); seed_data()"
+
+# 启动 FastAPI 服务
+exec python3 -m uvicorn main:app --host 0.0.0.0 --port 9000
