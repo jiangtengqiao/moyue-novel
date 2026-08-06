@@ -1,0 +1,4 @@
+#!/bin/bash
+# 腾讯云 SCF Web 函数启动脚本 (Node.js)
+cd /var/user
+node index.js
