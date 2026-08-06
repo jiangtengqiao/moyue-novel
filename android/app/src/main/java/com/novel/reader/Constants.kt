@@ -4,8 +4,8 @@ package com.novel.reader
  * 全局常量
  */
 object Constants {
-    /** 后端服务地址 - Render 免费托管地址 */
-    const val BASE_URL = "https://moyue-novel-api.onrender.com/"
+    /** 后端服务地址 - Koyeb 免费托管地址，部署后如不同再更新 */
+    const val BASE_URL = "https://moyue-novel-api.koyeb.app/"
 
     /** 当前应用版本名 */
     const val APP_VERSION = "1.1.0"
