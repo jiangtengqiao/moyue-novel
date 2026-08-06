@@ -8,10 +8,10 @@ object Constants {
     const val BASE_URL = "http://10.0.2.2:8000/"
 
     /** 当前应用版本名 */
-    const val APP_VERSION = "1.0.0"
+    const val APP_VERSION = "1.1.0"
 
     /** 当前应用版本号 */
-    const val APP_VERSION_CODE = 1
+    const val APP_VERSION_CODE = 2
 
     /** 分页大小 */
     const val PAGE_SIZE = 20

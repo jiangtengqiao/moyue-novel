@@ -1,0 +1,21 @@
+# Render 部署配置 (https://render.com)
+# 免费托管方案 - 配合 Neon/Supabase 免费 PostgreSQL 数据库
+
+services:
+  - type: web
+    name: moyue-novel-api
+    runtime: python
+    plan: free                        # 免费套餐
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -c "from database import init_db; from init_data import seed_data; init_db(); seed_data()" && uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false                   # 在 Render 后台手动填入 Neon/Supabase 的 PostgreSQL 连接串
+      - key: SECRET_KEY
+        generateValue: true           # Render 自动生成密钥
+      - key: DEBUG
+        value: "false"
+      - key: APK_DOWNLOAD_BASE
+        sync: false                   # 可选: 填入 GitHub Releases 地址前缀

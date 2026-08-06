@@ -2,7 +2,7 @@
 
 > 原创文学阅读平台 - 安卓客户端 + 后端服务
 
-**当前版本: v1.0.0**  
+**当前版本: v1.1.0**  
 **更新日期: 2026-08-06**
 
 ---
@@ -39,7 +39,8 @@
 | Python 3.13 | 运行时 |
 | FastAPI | Web 框架 |
 | SQLAlchemy 2.0 | ORM |
-| SQLite | 数据库 |
+| SQLite / PostgreSQL | 数据库(开发用 SQLite，生产用 PostgreSQL) |
+| psycopg2 | PostgreSQL 驱动 |
 | python-docx | DOCX 文件解析 |
 | markdown | Markdown 解析 |
 | bcrypt | 密码哈希 |
@@ -277,6 +278,16 @@ python main.py
 
 ## 版本历史
 
+### v1.1.0 (2026-08-06)
+- 数据库支持 PostgreSQL(生产) 与 SQLite(开发) 双模式自动切换
+- 新增 psycopg2 驱动，支持 Neon / Supabase 免费 PostgreSQL
+- 新增 render.yaml，支持 Render 免费托管部署
+- APK 下载支持外部链接(GitHub Releases)，适配临时文件系统
+- 数据库连接池优化(pool_pre_ping 自动重连)
+- 版本发布接口支持外部下载地址(无需上传文件)
+- 新增 .env.example 环境变量模板
+- 后端版本号同步至 1.1.0
+
 ### v1.0.0 (2026-08-06)
 - 首个正式版本
 - 完整的阅读体验: 书城、详情、阅读器、书架
@@ -310,17 +321,67 @@ python main.py
 
 ## 部署说明
 
-### 后端部署
+### 免费托管部署 (推荐)
+
+#### 第一步: 创建免费 PostgreSQL 数据库 (Neon)
+
+1. 注册 [Neon](https://neon.tech) (免费 0.5GB，Serverless，永久有效)
+2. 创建项目，获取连接串，格式:
+   ```
+   postgresql://用户名:密码@ep-xxx.region.aws.neon.tech/库名?sslmode=require
+   ```
+3. PostgreSQL 的 TEXT 类型单行可存储最大 1GB 文本，完全满足小说章节存储需求
+
+> 也可使用 [Supabase](https://supabase.com) (免费 500MB) 或 [Render PostgreSQL](https://render.com) (免费 90 天)
+
+#### 第二步: 部署后端到 Render
+
+1. 注册 [Render](https://render.com)
+2. New > Web Service > 连接 GitHub 仓库 `jiangtengqiao/moyue-novel`
+3. 配置:
+   - Root Directory: `backend`
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command:
+     ```
+     python -c "from database import init_db; from init_data import seed_data; init_db(); seed_data()" && uvicorn main:app --host 0.0.0.0 --port $PORT
+     ```
+4. 环境变量(Environment):
+   - `DATABASE_URL` = 第一步获取的 Neon 连接串
+   - `SECRET_KEY` = 随便填一个长随机字符串
+5. 部署完成后获得地址: `https://moyue-novel-api.onrender.com`
+6. 免费套餐会在 15 分钟无请求后休眠，首次请求冷启动约 30 秒
+
+#### 第三步: 托管 APK 安装包 (GitHub Releases)
+
+1. 在本仓库创建 Release，上传 APK 文件
+2. 获取下载链接: `https://github.com/jiangtengqiao/moyue-novel/releases/download/v1.1.0/moyue.apk`
+3. 调用发布接口注册版本:
+   ```
+   POST /api/update/publish
+   (登录 admin 账号后，提供 download_url 参数为上面的 GitHub Releases 链接)
+   ```
+
+#### 第四步: 更新 Android 客户端地址
+
+修改 `android/app/src/main/java/com/novel/reader/Constants.kt`:
+```kotlin
+const val BASE_URL = "https://moyue-novel-api.onrender.com/"
+```
+
+### 本地开发部署
+
 1. 安装 Python 3.13+
 2. 安装依赖: `pip install -r requirements.txt`
-3. 启动: `uvicorn main:app --host 0.0.0.0 --port 8000`
-4. 生产环境建议使用 gunicorn + nginx
+3. 复制 `.env.example` 为 `.env`，按需配置
+4. 启动: `uvicorn main:app --host 0.0.0.0 --port 8000 --reload`
+5. 访问 API 文档: `http://localhost:8000/docs`
 
 ### Android 签名打包
+
 1. 在 Android Studio 中 Build > Generate Signed Bundle / APK
 2. 创建或选择 keystore
 3. 选择 release 变体构建
-4. 将生成的 APK 上传至后端 `/api/update/publish` 接口
+4. 将 APK 上传到 GitHub Release，然后调用 `/api/update/publish` 注册版本
 
 ### 更新后端地址
 修改 `android/app/src/main/java/com/novel/reader/Constants.kt`:

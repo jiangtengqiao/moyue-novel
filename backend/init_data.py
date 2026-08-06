@@ -86,12 +86,12 @@ def seed_data():
         # 初始版本信息
         if db.query(AppVersion).count() == 0:
             version = AppVersion(
-                version_name="1.0.0",
-                version_code=1,
+                version_name="1.1.0",
+                version_code=2,
                 download_url="/api/update/download",
                 file_size=0,
-                update_title="墨阅小说 v1.0.0 正式版",
-                update_log="首个正式版本发布\n- 完整阅读体验\n- 创作者中心\n- 文件夹批量上传\n- 自动更新与公告系统",
+                update_title="墨阅小说 v1.1.0",
+                update_log="v1.1.0 更新\n- 支持 PostgreSQL 大容量数据库\n- 支持 Render 免费托管部署\n- APK 支持外部链接下载(GitHub Releases)\n- 数据库连接池优化",
                 force_update=False,
                 is_active=True,
                 min_supported_version="1.0.0",
