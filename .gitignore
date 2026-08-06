@@ -1,0 +1,37 @@
+# Android / Gradle
+*.apk
+*.aab
+*.dex
+*.class
+*.iml
+.gradle/
+build/
+/local.properties
+/.idea/
+.DS_Store
+/captures/
+.externalNativeBuild/
+.cxx/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+.venv/
+
+# 数据库
+*.db
+*.db-journal
+
+# 上传文件
+backend/data/uploads/*
+backend/data/apk/*
+backend/data/novels/*
+!backend/data/uploads/.gitkeep
+!backend/data/apk/.gitkeep
+!backend/data/novels/.gitkeep
