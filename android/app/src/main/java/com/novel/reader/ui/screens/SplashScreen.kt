@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -251,7 +253,7 @@ private fun Modifier.graphicsLayerAlpha(alpha: Float, scale: Float): Modifier {
 
 private fun Modifier.androidxGraphicsLayer(alpha: Float, scale: Float): Modifier =
     this.then(
-        androidx.compose.ui.graphics.graphicsLayer(
+        Modifier.graphicsLayer(
             scaleX = scale,
             scaleY = scale,
             alpha = alpha,

@@ -50,14 +50,14 @@ class LibraryViewModel @Inject constructor(
             if (token == null) {
                 _isLoggedIn.value = false
                 _loading.value = false
-                return
+            } else {
+                _isLoggedIn.value = true
+                _loading.value = true
+                try {
+                    _bookmarks.value = repository.getBookmarks()
+                } catch (_: Exception) {}
+                _loading.value = false
             }
-            _isLoggedIn.value = true
-            _loading.value = true
-            try {
-                _bookmarks.value = repository.getBookmarks()
-            } catch (_: Exception) {}
-            _loading.value = false
         }
     }
 }

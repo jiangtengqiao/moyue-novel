@@ -1,6 +1,7 @@
 package com.novel.reader.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -140,6 +142,6 @@ private fun BottomBar(
 @Composable
 private fun Modifier.graphicsLayerScale(scale: Float): Modifier {
     return this.then(
-        androidx.compose.ui.graphics.graphicsLayer(scaleX = scale, scaleY = scale)
+        Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
     )
 }

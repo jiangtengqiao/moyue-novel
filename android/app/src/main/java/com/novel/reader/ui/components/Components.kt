@@ -47,7 +47,7 @@ fun NovelCard(
         kotlinx.coroutines.delay(index * 50L)
         visible = true
     }
-    val alpha by animateFloatAsState(
+    val cardAlpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = tween(400, easing = FastOutSlowInEasing),
         label = "cardAlpha"
@@ -56,7 +56,7 @@ fun NovelCard(
     Column(
         modifier = modifier
             .width(110.dp)
-            .graphicsLayer { scaleX = scale; scaleY = scale; alpha = this.alpha * alpha }
+            .graphicsLayer { scaleX = scale; scaleY = scale; alpha = this.alpha * cardAlpha }
             .clickable(
                 interactionSource = interaction,
                 indication = null,

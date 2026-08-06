@@ -28,7 +28,7 @@ fun Modifier.slideInFromBottom(
     )
     val offsetY by animateDpAsState(
         targetValue = if (visible) 0.dp else 24.dp,
-        animationSpec = tween(durationMillis = 500, delayMs = delayMs, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 500, delayMillis = delayMs, easing = FastOutSlowInEasing),
         label = "offset"
     )
     return this.alpha(alpha).offset(y = offsetY)

@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.novel.reader.data.model.ChapterContent
 import com.novel.reader.data.repository.NovelRepository
+import com.novel.reader.ui.components.LoadingIndicator
 import com.novel.reader.ui.theme.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
