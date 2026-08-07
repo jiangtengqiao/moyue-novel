@@ -3,6 +3,7 @@ package com.novel.reader.data.repository
 import com.novel.reader.data.api.MoYueApi
 import com.novel.reader.data.api.NovelCreateBody
 import com.novel.reader.data.api.ReadingProgressBody
+import com.novel.reader.data.api.ChapterCreateBody
 import com.novel.reader.data.model.*
 import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -69,6 +70,16 @@ class NovelRepository @Inject constructor(
     suspend fun getChapters(novelId: String) = api.getChapters(novelId)
 
     suspend fun getChapterContent(novelId: String, chapterIndex: Int) = api.getChapterByIndex(novelId, chapterIndex)
+
+    suspend fun createChapter(novelId: String, title: String, content: String, level: Int = 2, volume: String = ""): ChapterContent {
+        return api.createChapter(token(), novelId, ChapterCreateBody(title, content, level, volume))
+    }
+
+    suspend fun updateChapter(novelId: String, chapterId: String, title: String, content: String, level: Int = 2, volume: String = ""): ChapterContent {
+        return api.updateChapter(token(), novelId, chapterId, ChapterCreateBody(title, content, level, volume))
+    }
+
+    suspend fun deleteChapter(novelId: String, chapterId: String) = api.deleteChapter(token(), novelId, chapterId)
 
     // ==================== 创作者 ====================
 

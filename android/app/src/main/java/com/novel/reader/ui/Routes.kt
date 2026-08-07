@@ -31,6 +31,7 @@ object Routes {
     const val MY_NOVELS = "my_novels"
     const val READING_HISTORY = "reading_history"
     const val SETTINGS = "settings"
+    const val CHAPTER_EDIT = "chapter_edit/{novelId}?chapterId={chapterId}"
 
     fun novelDetail(id: String) = "novel/$id"
     fun reader(novelId: String, index: Int) = "reader/$novelId/$index"
@@ -38,4 +39,6 @@ object Routes {
     fun announcementDetail(id: String) = "announcement/$id"
     fun uploadNovel(novelId: String) = "upload_novel/$novelId"
     fun uploadProgress(taskId: String) = "upload_progress/$taskId"
+    fun chapterEdit(novelId: String, chapterId: String? = null) =
+        if (chapterId == null) "chapter_edit/$novelId" else "chapter_edit/$novelId?chapterId=$chapterId"
 }

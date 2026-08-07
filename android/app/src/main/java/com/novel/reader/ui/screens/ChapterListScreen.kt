@@ -1,13 +1,19 @@
 package com.novel.reader.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,15 +49,34 @@ class ChapterListViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query
 
+    private val _isCreator = MutableStateFlow(false)
+    val isCreator: StateFlow<Boolean> = _isCreator
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message
+
     fun load(novelId: String) {
         viewModelScope.launch {
             _loading.value = true
-            try { _chapters.value = repository.getChapters(novelId) } catch (_: Exception) {}
+            try {
+                _chapters.value = repository.getChapters(novelId)
+                try { repository.getCreatorProfile(); _isCreator.value = true } catch (_: Exception) { _isCreator.value = false }
+            } catch (_: Exception) {}
             _loading.value = false
         }
     }
 
     fun setQuery(q: String) { _query.value = q }
+
+    fun deleteChapter(novelId: String, chapter: Chapter) {
+        viewModelScope.launch {
+            try {
+                repository.deleteChapter(novelId, chapter.id)
+                _chapters.value = _chapters.value.filter { it.id != chapter.id }
+                _message.value = "已删除: ${chapter.title}"
+            } catch (e: Exception) { _message.value = "删除失败: ${e.message}" }
+        }
+    }
 }
 
 @Composable
@@ -60,16 +85,31 @@ fun ChapterListScreen(
     viewModel: ChapterListViewModel = hiltViewModel(),
     onBack: () -> Unit,
     onChapterClick: (String, Int) -> Unit,
+    onEditChapter: (String, String?) -> Unit,
+    onAddChapter: (String) -> Unit,
 ) {
     LaunchedEffect(novelId) { viewModel.load(novelId) }
 
     val chapters by viewModel.chapters.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val query by viewModel.query.collectAsState()
+    val isCreator by viewModel.isCreator.collectAsState()
+    val message by viewModel.message.collectAsState()
 
     val filtered = remember(chapters, query) {
         if (query.isBlank()) chapters
         else chapters.filter { it.title.contains(query, ignoreCase = true) }
+    }
+
+    // 按卷分组：volume 为空时归入"正文"
+    val grouped = remember(filtered) {
+        filtered.groupBy { it.volume.ifBlank { "正文" } }
+    }
+
+    val expandedVolumes = remember { mutableStateMapOf<String, Boolean>().apply { putAll(grouped.keys.map { it to true }) } }
+
+    LaunchedEffect(grouped.keys) {
+        grouped.keys.forEach { k -> if (!expandedVolumes.contains(k)) expandedVolumes[k] = true }
     }
 
     Column(
@@ -88,9 +128,13 @@ fun ChapterListScreen(
             Text("目录", style = MaterialTheme.typography.titleLarge, fontFamily = FontFamily.Serif)
             Spacer(Modifier.weight(1f))
             Text("共${chapters.size}章", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (isCreator) {
+                IconButton(onClick = { onAddChapter(novelId) }) {
+                    Icon(Icons.Outlined.Add, "添加章节", tint = AccentGold)
+                }
+            }
         }
 
-        // 搜索框
         OutlinedTextField(
             value = query,
             onValueChange = viewModel::setQuery,
@@ -101,6 +145,10 @@ fun ChapterListScreen(
             shape = RoundedCornerShape(12.dp),
         )
 
+        message?.let {
+            Text(it, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = if (it.startsWith("已删除")) StatusSuccess else MaterialTheme.colorScheme.error)
+        }
+
         if (loading) {
             LoadingIndicator()
         } else if (filtered.isEmpty()) {
@@ -108,43 +156,100 @@ fun ChapterListScreen(
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                itemsIndexed(filtered) { index, ch ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { onChapterClick(novelId, ch.sortOrder) }
-                            .padding(horizontal = 12.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "${ch.sortOrder + 1}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = AccentGold,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.width(36.dp),
-                        )
-                        Text(
-                            text = ch.title,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            text = "${ch.wordCount}字",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                grouped.forEach { (volume, chs) ->
+                    item(key = "vol_$volume") {
+                        val expanded = expandedVolumes[volume] ?: true
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        ) {
+                            Row(
+                                modifier = Modifier.clickable { expandedVolumes[volume] = !expanded }.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    "卷·$volume",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AccentGold,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text("${chs.size}章", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Spacer(Modifier.width(8.dp))
+                                Icon(
+                                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                    contentDescription = if (expanded) "折叠" else "展开",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
                     }
-                    if (index != filtered.lastIndex) {
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                        )
+                    if (expandedVolumes[volume] != false) {
+                        items(chs) { ch ->
+                            ChapterItemRow(
+                                chapter = ch,
+                                isCreator = isCreator,
+                                onClick = { onChapterClick(novelId, ch.sortOrder) },
+                                onEdit = { onEditChapter(novelId, ch.id) },
+                                onDelete = { viewModel.deleteChapter(novelId, ch) },
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun ChapterItemRow(
+    chapter: Chapter,
+    isCreator: Boolean,
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var showActions by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { showActions = !showActions }
+            .padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "${chapter.sortOrder + 1}",
+            style = MaterialTheme.typography.labelMedium,
+            color = AccentGold,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(36.dp),
+        )
+        Text(
+            text = chapter.title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f).clickable { onClick() },
+        )
+        if (isCreator && showActions) {
+            IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Outlined.Edit, "编辑", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Outlined.Delete, "删除", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+            }
+        } else {
+            Text(
+                text = "${chapter.wordCount}字",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        modifier = Modifier.padding(horizontal = 12.dp),
+    )
 }

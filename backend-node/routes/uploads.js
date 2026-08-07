@@ -31,8 +31,8 @@ router.post('/single/:novelId', authMiddleware, upload.single('file'), async (re
     let totalWords = 0;
     for (const ch of result.chapters) {
       chapterSort++;
-      await pool.query('INSERT INTO chapters (id, novel_id, title, content, word_count, sort_order) VALUES ($1, $2, $3, $4, $5, $6)',
-        [crypto.randomUUID(), novel.id, ch.title, ch.content, ch.word_count, chapterSort]);
+      await pool.query('INSERT INTO chapters (id, novel_id, title, content, word_count, sort_order, level, volume) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [crypto.randomUUID(), novel.id, ch.title, ch.content, ch.word_count, chapterSort, ch.level || 2, ch.volume || '']);
       totalWords += ch.word_count;
     }
     await pool.query('UPDATE novels SET chapter_count = $1, word_count = word_count + $2 WHERE id = $3', [chapterSort, totalWords, novel.id]);
@@ -80,8 +80,8 @@ router.post('/folder/:novelId', authMiddleware, upload.array('files', 50), async
       } else {
         for (const ch of result.chapters) {
           chapterSort++;
-          await pool.query('INSERT INTO chapters (id, novel_id, title, content, word_count, sort_order) VALUES ($1, $2, $3, $4, $5, $6)',
-            [crypto.randomUUID(), novel.id, ch.title, ch.content, ch.word_count, chapterSort]);
+          await pool.query('INSERT INTO chapters (id, novel_id, title, content, word_count, sort_order, level, volume) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [crypto.randomUUID(), novel.id, ch.title, ch.content, ch.word_count, chapterSort, ch.level || 2, ch.volume || '']);
           totalWords += ch.word_count;
         }
         processed++;

@@ -32,6 +32,11 @@ async function initDB() {
   await pool.query(sql);
   // 补充 reading_histories 缺失的 chapter_title 列
   try { await pool.query('ALTER TABLE reading_histories ADD COLUMN IF NOT EXISTS chapter_title TEXT'); } catch(e) {}
+  // 补充 chapters 缺失的 level 和 volume 列（用于卷/章/节三级结构）
+  try {
+    await pool.query('ALTER TABLE chapters ADD COLUMN IF NOT EXISTS level INTEGER DEFAULT 2');
+    await pool.query('ALTER TABLE chapters ADD COLUMN IF NOT EXISTS volume TEXT DEFAULT \'\'');
+  } catch(e) {}
 }
 
 async function seedData() {
@@ -95,41 +100,11 @@ async function seedData() {
       [crypto.randomUUID(), '1.0.0', 1, '/api/update/download', '墨阅小说 v1.0.0', '首个正式版本', false, true, '1.0.0']);
   }
 
-  // 示例小说（幂等：按标题查重，状态改为 published 才能在书城显示）
-  const novelCheck = await pool.query("SELECT id FROM novels WHERE title = '星河彼岸'");
-  let novelId;
-  if (novelCheck.rows.length === 0) {
-    const catRow = await pool.query("SELECT id FROM categories WHERE name = 'xuanhuan'");
-    const catId = catRow.rows[0].id;
-    novelId = crypto.randomUUID();
-    await pool.query(`INSERT INTO novels (id, title, author, creator_id, category_id, description, tags, status, word_count, chapter_count, featured)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [novelId, '星河彼岸', '官方编辑部', creatorId, catId, '在浩瀚星河的尽头，少年踏上一段寻找自我与真相的旅程。', JSON.stringify(['玄幻','冒险','成长']), 'published', 0, 0, true]);
-  } else {
-    novelId = novelCheck.rows[0].id;
-  }
-
-  // 示例章节（幂等：按小说 + 标题查重）
-  const chapters = [
-    ['序章 星落', '夜空如墨，繁星点点。\n\n少年站在山巅，仰望那片亘古不变的星河。风从远方吹来，带着未知的气息。\n\n"什么时候才能到达那里呢？"他喃喃自语。\n\n星光洒落，仿佛在回应他的呼唤。一颗流星划过天际，拖着长长的尾迹，坠向地平线的尽头。'],
-    ['第一章 启程', '清晨的阳光穿过薄雾，洒在宁静的小镇上。\n\n少年收拾好行囊，回头看了一眼生活了十六年的家。\n\n"该走了。"他深吸一口气，迈出了第一步。\n\n路很长，但心很坚定。前方有未知的风暴，也有未曾见过的风景。'],
-    ['第二章 迷雾森林', '走进森林的那一刻，光线便暗了下来。\n\n浓雾在树间流动，如同活物一般。古老的树木高耸入云，枝叶交织成穹顶。\n\n少年握紧手中的短剑，每一步都小心翼翼。'],
-  ];
-  let totalWords = 0;
-  let chapterCount = 0;
-  for (let i = 0; i < chapters.length; i++) {
-    const chCheck = await pool.query('SELECT id FROM chapters WHERE novel_id = $1 AND title = $2', [novelId, chapters[i][0]]);
-    if (chCheck.rows.length > 0) continue;
-    const wc = chapters[i][1].replace(/\s/g, '').length;
-    await pool.query('INSERT INTO chapters (id, novel_id, title, content, word_count, sort_order) VALUES ($1, $2, $3, $4, $5, $6)',
-      [crypto.randomUUID(), novelId, chapters[i][0], chapters[i][1], wc, i]);
-    totalWords += wc;
-    chapterCount++;
-  }
-  if (chapterCount > 0) {
-    await pool.query('UPDATE novels SET word_count = word_count + $1, chapter_count = chapter_count + $2 WHERE id = $3',
-      [totalWords, chapterCount, novelId]);
-  }
+  // 清除所有旧示例数据（用户主动要求删除预设书籍）
+  try {
+    await pool.query("DELETE FROM chapters WHERE novel_id IN (SELECT id FROM novels WHERE title IN ('星河彼岸','儒林外史','西游记','红楼梦','水浒传','三国演义','呐喊','彷徨','朝花夕拾','野草'))");
+    await pool.query("DELETE FROM novels WHERE title IN ('星河彼岸','儒林外史','西游记','红楼梦','水浒传','三国演义','呐喊','彷徨','朝花夕拾','野草')");
+  } catch(e) { console.log('清理旧示例数据:', e.message); }
 
   console.log('[墨阅小说] 种子数据已就绪 (admin / admin123)');
 }

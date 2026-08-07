@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS chapters (
   is_free BOOLEAN DEFAULT TRUE,
   price INTEGER DEFAULT 0,
   status TEXT DEFAULT 'published',
+  level INTEGER DEFAULT 2,
+  volume TEXT DEFAULT '',
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

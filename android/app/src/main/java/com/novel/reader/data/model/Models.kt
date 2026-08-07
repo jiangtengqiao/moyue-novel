@@ -95,6 +95,8 @@ data class Chapter(
     @SerialName("sort_order") val sortOrder: Int = 0,
     @SerialName("is_free") val isFree: Boolean = true,
     val status: String = "published",
+    val level: Int = 2,
+    val volume: String = "",
     @SerialName("created_at") val createdAt: String? = null,
 )
 

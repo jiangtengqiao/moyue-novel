@@ -17,6 +17,78 @@ function scanFolderFiles(filenames) {
     });
 }
 
+/**
+ * 智能编码检测：先检测BOM，再用统计学方法判断UTF-8/GBK/Big5
+ */
+function detectEncoding(buf) {
+  // 1. BOM 检测
+  if (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) return 'utf8';
+  if (buf.length >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) return 'utf16le';
+  if (buf.length >= 2 && buf[0] === 0xFE && buf[1] === 0xFF) return 'utf16be';
+
+  // 2. 尝试 UTF-8 严格解码
+  let isUtf8 = true;
+  let i = 0;
+  while (i < buf.length) {
+    const b = buf[i];
+    if (b < 0x80) { i++; continue; }
+    if (b < 0xC2) { isUtf8 = false; break; }
+    if (b < 0xE0) {
+      if (i + 1 >= buf.length || (buf[i + 1] & 0xC0) !== 0x80) { isUtf8 = false; break; }
+      i += 2; continue;
+    }
+    if (b < 0xF0) {
+      if (i + 2 >= buf.length || (buf[i + 1] & 0xC0) !== 0x80 || (buf[i + 2] & 0xC0) !== 0x80) { isUtf8 = false; break; }
+      i += 3; continue;
+    }
+    isUtf8 = false; break;
+  }
+  if (isUtf8) return 'utf8';
+
+  // 3. GBK 检测：双字节字符高位在 0x81-0xFE，低位在 0x40-0xFE
+  let gbkScore = 0, totalBytes = 0;
+  for (let j = 0; j < Math.min(buf.length, 8192); j++) {
+    const b = buf[j];
+    if (b >= 0x81 && b <= 0xFE && j + 1 < buf.length) {
+      const b2 = buf[j + 1];
+      if (b2 >= 0x40 && b2 <= 0xFE && b2 !== 0x7F) { gbkScore++; j++; totalBytes += 2; continue; }
+    }
+    totalBytes++;
+  }
+  if (gbkScore > 0 && gbkScore / (totalBytes / 2) > 0.3) return 'gbk';
+
+  // 4. 默认 UTF-8（兼容）
+  return 'utf8';
+}
+
+function decodeBuffer(buf) {
+  const enc = detectEncoding(buf);
+  if (enc === 'utf8') {
+    // 去 BOM
+    if (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+      return buf.slice(3).toString('utf8');
+    }
+    return buf.toString('utf8');
+  }
+  if (enc === 'utf16le') return buf.slice(2).toString('utf16le');
+  if (enc === 'utf16be') {
+    const swapped = Buffer.allocUnsafe(buf.length - 2);
+    for (let i = 2; i < buf.length; i += 2) {
+      swapped[i - 2] = buf[i + 1]; swapped[i - 1] = buf[i];
+    }
+    return swapped.toString('utf16le');
+  }
+  if (enc === 'gbk') {
+    try {
+      const iconv = require('iconv-lite');
+      return iconv.decode(buf, 'gbk');
+    } catch (e) {
+      return buf.toString('utf8');
+    }
+  }
+  return buf.toString('utf8');
+}
+
 function parseFile(content, filename) {
   const ext = path.extname(filename).toLowerCase();
   const title = path.basename(filename, ext);
@@ -29,36 +101,22 @@ function parseFile(content, filename) {
 }
 
 function parseTxt(content, filename, title) {
-  const encodings = ['utf8', 'ucs2', 'ascii'];
-  let text = null;
-  
-  // 尝试检测 GBK 编码
-  try {
-    const buf = Buffer.isBuffer(content) ? content : Buffer.from(content);
-    text = buf.toString('utf8');
-    if (text.includes('�')) throw new Error('bad encoding');
-  } catch (e) {
-    try {
-      const iconv = require('iconv-lite');
-      text = iconv.decode(Buffer.from(content), 'gbk');
-    } catch (e2) {
-      text = Buffer.from(content).toString('utf8');
-    }
-  }
-  
+  const buf = Buffer.isBuffer(content) ? content : Buffer.from(content);
+  const text = decodeBuffer(buf);
   const chapters = splitChapters(text, title);
   const total = chapters.reduce((s, c) => s + c.word_count, 0);
   return { filename, title, chapters, total_words: total, success: true };
 }
 
 function parseMd(content, filename, title) {
-  let text = Buffer.isBuffer(content) ? content.toString('utf8') : content;
+  const buf = Buffer.isBuffer(content) ? content : Buffer.from(content);
+  let text = decodeBuffer(buf);
   
   for (const line of text.split('\n')) {
     if (line.startsWith('# ')) { title = line.replace(/^#+\s*/, '').trim(); break; }
   }
   
-  // 简单 markdown 转纯文本
+  // Markdown 转纯文本
   text = text
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -82,7 +140,6 @@ function parseDocx(content, filename, title) {
     if (!docXml) return { filename, title, chapters: [], total_words: 0, success: false, error: '无法读取DOCX' };
     
     const xml = docXml.getData().toString('utf8');
-    // 提取段落文本
     const paragraphs = [];
     const pRegex = /<w:p[^>]*>([\s\S]*?)<\/w:p>/g;
     let match;
@@ -110,4 +167,4 @@ function parseDocx(content, filename, title) {
   }
 }
 
-module.exports = { parseFile, scanFolderFiles };
+module.exports = { parseFile, scanFolderFiles, decodeBuffer, detectEncoding };

@@ -145,6 +145,26 @@ fun MoYueNavGraph(
                         popUpTo(Routes.CHAPTER_LIST) { inclusive = true }
                     }
                 },
+                onEditChapter = { novelId, chapterId ->
+                    navController.navigate(Routes.chapterEdit(novelId, chapterId))
+                },
+                onAddChapter = { novelId ->
+                    navController.navigate(Routes.chapterEdit(novelId, null))
+                },
+            )
+        }
+
+        composable(
+            Routes.CHAPTER_EDIT,
+            arguments = listOf(
+                navArgument("novelId") { type = NavType.StringType },
+                navArgument("chapterId") { type = NavType.StringType; nullable = true; defaultValue = null },
+            ),
+        ) { entry ->
+            ChapterEditScreen(
+                novelId = entry.arguments?.getString("novelId") ?: "",
+                chapterId = entry.arguments?.getString("chapterId"),
+                onBack = { navController.popBackStack() },
             )
         }
 

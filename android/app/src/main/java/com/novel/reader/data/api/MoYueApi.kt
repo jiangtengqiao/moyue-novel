@@ -96,6 +96,28 @@ interface MoYueApi {
         @Path("chapterId") chapterId: String,
     ): ChapterContent
 
+    @POST("api/novels/{novelId}/chapters/")
+    suspend fun createChapter(
+        @Header("Authorization") token: String,
+        @Path("novelId") novelId: String,
+        @Body body: ChapterCreateBody,
+    ): ChapterContent
+
+    @PUT("api/novels/{novelId}/chapters/{chapterId}")
+    suspend fun updateChapter(
+        @Header("Authorization") token: String,
+        @Path("novelId") novelId: String,
+        @Path("chapterId") chapterId: String,
+        @Body body: ChapterCreateBody,
+    ): ChapterContent
+
+    @DELETE("api/novels/{novelId}/chapters/{chapterId}")
+    suspend fun deleteChapter(
+        @Header("Authorization") token: String,
+        @Path("novelId") novelId: String,
+        @Path("chapterId") chapterId: String,
+    ): MessageResponse
+
     // ==================== 创作者 ====================
 
     @POST("api/creator/register")
@@ -172,4 +194,12 @@ data class NovelCreateBody(
 data class ReadingProgressBody(
     @kotlinx.serialization.SerialName("chapter_index") val chapterIndex: Int,
     @kotlinx.serialization.SerialName("chapter_title") val chapterTitle: String = "",
+)
+
+@kotlinx.serialization.Serializable
+data class ChapterCreateBody(
+    val title: String,
+    val content: String = "",
+    val level: Int = 2,
+    val volume: String = "",
 )
