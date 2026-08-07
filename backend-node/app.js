@@ -6,8 +6,25 @@ const { initDB } = require('./db');
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 内联 JSON body 解析（兼容旧版 Express，不依赖 body-parser）
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'DELETE') return next();
+  const ct = req.headers['content-type'] || '';
+  let data = '';
+  req.on('data', chunk => { data += chunk; });
+  req.on('end', () => {
+    if (data) {
+      if (ct.indexOf('application/json') >= 0) {
+        try { req.body = JSON.parse(data); } catch(e) { req.body = {}; }
+      } else {
+        req.rawBody = data;
+      }
+    }
+    next();
+  });
+  req.on('error', () => next());
+});
 
 // 静态文件 (APK 下载等)
 const dataDir = path.join(__dirname, 'data');

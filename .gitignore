@@ -35,3 +35,13 @@ backend/data/novels/*
 !backend/data/uploads/.gitkeep
 !backend/data/apk/.gitkeep
 !backend/data/novels/.gitkeep
+
+# Node
+node_modules/
+backend-node/nm/
+backend-node/node_modules/
+backend-node/node_modules_new/
+
+# 打包产物 / 临时测试
+*.zip
+scf-test/
