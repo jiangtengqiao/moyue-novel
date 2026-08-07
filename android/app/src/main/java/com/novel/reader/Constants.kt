@@ -5,7 +5,7 @@ package com.novel.reader
  */
 object Constants {
     /** 后端服务地址 - 腾讯云 SCF 函数 URL */
-    const val BASE_URL = "https://1432945062-lhlwocvyr5.ap-guangzhou.tencentscf.com/"
+    const val BASE_URL = "https://1432945062-f2koniz849.ap-guangzhou.tencentscf.com/"
 
     /** 当前应用版本名 */
     const val APP_VERSION = "1.1.0"

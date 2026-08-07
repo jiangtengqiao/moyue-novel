@@ -45,3 +45,4 @@ backend-node/node_modules_new/
 # 打包产物 / 临时测试
 *.zip
 scf-test/
+scf-stage/
