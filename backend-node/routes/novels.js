@@ -121,6 +121,16 @@ router.get('/bookmarks/list', authMiddleware, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// 管理员：设置精选
+router.patch('/:id/featured', authMiddleware, async (req, res, next) => {
+  try {
+    const user = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.userId]);
+    if (!user.rows[0] || !user.rows[0].is_admin) return res.status(403).json({ message: '无权限' });
+    await pool.query('UPDATE novels SET featured = $1 WHERE id = $2', [req.body.featured ? true : false, req.params.id]);
+    res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
 // 章节子路由
 router.use('/:novelId/chapters', require('./chapters'));
 
