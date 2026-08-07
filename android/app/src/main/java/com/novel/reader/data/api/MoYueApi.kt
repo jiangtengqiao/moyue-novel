@@ -57,7 +57,7 @@ interface MoYueApi {
     suspend fun updateNovel(
         @Header("Authorization") token: String,
         @Path("id") id: String,
-        @Body body: Map<String, Any?>,
+        @Body body: NovelUpdateBody,
     ): Novel
 
     @POST("api/novels/{id}/bookmark")
@@ -68,6 +68,16 @@ interface MoYueApi {
 
     @GET("api/novels/bookmarks/list")
     suspend fun getBookmarks(@Header("Authorization") token: String): List<NovelBrief>
+
+    @POST("api/novels/{id}/history")
+    suspend fun saveReadingProgress(
+        @Header("Authorization") token: String,
+        @Path("id") novelId: String,
+        @Body body: ReadingProgressBody,
+    ): MessageResponse
+
+    @GET("api/novels/reading-history/list")
+    suspend fun getReadingHistory(@Header("Authorization") token: String): List<ReadingHistoryItem>
 
     // ==================== 章节 ====================
 
@@ -114,7 +124,7 @@ interface MoYueApi {
         @Header("Authorization") token: String,
         @Path("novelId") novelId: String,
         @Part file: MultipartBody.Part,
-    ): Map<String, Any?>
+    ): UploadSingleResponse
 
     @Multipart
     @POST("api/upload/folder/{novelId}")
@@ -156,4 +166,10 @@ data class NovelCreateBody(
     val description: String = "",
     val tags: List<String> = emptyList(),
     val status: String = "ongoing",
+)
+
+@kotlinx.serialization.Serializable
+data class ReadingProgressBody(
+    @kotlinx.serialization.SerialName("chapter_index") val chapterIndex: Int,
+    @kotlinx.serialization.SerialName("chapter_title") val chapterTitle: String = "",
 )

@@ -13,7 +13,8 @@ data class User(
     val nickname: String? = null,
     val avatar: String? = null,
     val bio: String? = null,
-    val isCreator: Boolean = false,
+    @SerialName("is_creator") val isCreator: Boolean = false,
+    @SerialName("is_admin") val isAdmin: Boolean = false,
     @SerialName("created_at") val createdAt: String? = null,
 )
 
@@ -232,4 +233,36 @@ data class DashboardData(
     @SerialName("total_collects") val totalCollects: Int,
     @SerialName("total_chapters") val totalChapters: Int,
     @SerialName("recent_novels") val recentNovels: List<NovelBrief> = emptyList(),
+)
+
+@Serializable
+data class UploadSingleResponse(
+    val success: Boolean = true,
+    val filename: String = "",
+    @SerialName("chapters_added") val chaptersAdded: Int = 0,
+    @SerialName("words_added") val wordsAdded: Int = 0,
+    val message: String = "",
+)
+
+@Serializable
+data class NovelUpdateBody(
+    val title: String? = null,
+    val author: String? = null,
+    val description: String? = null,
+    @SerialName("category_id") val categoryId: String? = null,
+    val tags: List<String>? = null,
+    val status: String? = null,
+)
+
+@Serializable
+data class ReadingHistoryItem(
+    val id: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("novel_id") val novelId: String,
+    @SerialName("novel_title") val novelTitle: String = "",
+    @SerialName("novel_author") val novelAuthor: String = "",
+    @SerialName("chapter_index") val chapterIndex: Int = 0,
+    @SerialName("chapter_title") val chapterTitle: String = "",
+    @SerialName("cover_url") val coverUrl: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
 )

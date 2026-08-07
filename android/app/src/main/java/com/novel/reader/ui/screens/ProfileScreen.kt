@@ -134,14 +134,14 @@ fun ProfileScreen(
             listOf(
                 MenuItemData("创作者中心", Icons.Outlined.Dashboard, Routes.CREATOR_DASHBOARD),
                 MenuItemData("我的作品", Icons.Outlined.MenuBook, Routes.MY_NOVELS),
-                MenuItemData("阅读历史", Icons.Outlined.History, null),
+                MenuItemData("阅读历史", Icons.Outlined.History, Routes.READING_HISTORY),
                 MenuItemData("公告中心", Icons.Outlined.Campaign, Routes.ANNOUNCEMENTS),
-                MenuItemData("设置", Icons.Outlined.Settings, null),
+                MenuItemData("设置", Icons.Outlined.Settings, Routes.SETTINGS),
             )
         } else {
             listOf(
                 MenuItemData("公告中心", Icons.Outlined.Campaign, Routes.ANNOUNCEMENTS),
-                MenuItemData("设置", Icons.Outlined.Settings, null),
+                MenuItemData("设置", Icons.Outlined.Settings, Routes.SETTINGS),
             )
         }
 

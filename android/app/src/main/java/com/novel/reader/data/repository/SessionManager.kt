@@ -20,6 +20,9 @@ class SessionManager @Inject constructor(
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("auth_token")
         private val USER_KEY = stringPreferencesKey("user_data")
+        private val FONT_SIZE_KEY = intPreferencesKey("reader_font_size")
+        private val NIGHT_MODE_KEY = booleanPreferencesKey("reader_night_mode")
+        private val READER_BG_KEY = intPreferencesKey("reader_bg_index")
     }
 
     suspend fun saveToken(token: String) {
@@ -35,6 +38,14 @@ class SessionManager @Inject constructor(
         dataStore.edit { it.clear() }
     }
 
+    suspend fun saveReaderPrefs(fontSize: Int, nightMode: Boolean, bgIndex: Int) {
+        dataStore.edit {
+            it[FONT_SIZE_KEY] = fontSize
+            it[NIGHT_MODE_KEY] = nightMode
+            it[READER_BG_KEY] = bgIndex
+        }
+    }
+
     val tokenFlow: Flow<String?> = dataStore.data.map { it[TOKEN_KEY] }
     val userFlow: Flow<User?> = dataStore.data.map { prefs ->
         prefs[USER_KEY]?.let { jsonStr ->
@@ -43,6 +54,9 @@ class SessionManager @Inject constructor(
             } catch (_: Exception) { null }
         }
     }
+    val fontSizeFlow: Flow<Int> = dataStore.data.map { it[FONT_SIZE_KEY] ?: 18 }
+    val nightModeFlow: Flow<Boolean> = dataStore.data.map { it[NIGHT_MODE_KEY] ?: false }
+    val readerBgFlow: Flow<Int> = dataStore.data.map { it[READER_BG_KEY] ?: 0 }
 
     fun getTokenSync(prefs: Preferences): String? = prefs[TOKEN_KEY]
 }

@@ -61,7 +61,7 @@ class UploadViewModel @Inject constructor(
             _error.value = null
             try {
                 val result = repository.uploadSingleFile(novelId, file)
-                _error.value = "上传成功: ${result["message"]}"
+                _error.value = "上传成功: ${result.message}"
             } catch (e: Exception) {
                 _error.value = "上传失败: ${e.message}"
             }

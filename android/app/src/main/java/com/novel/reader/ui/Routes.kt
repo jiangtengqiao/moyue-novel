@@ -29,6 +29,8 @@ object Routes {
     const val UPLOAD_NOVEL = "upload_novel/{novelId}"
     const val UPLOAD_PROGRESS = "upload_progress/{taskId}"
     const val MY_NOVELS = "my_novels"
+    const val READING_HISTORY = "reading_history"
+    const val SETTINGS = "settings"
 
     fun novelDetail(id: String) = "novel/$id"
     fun reader(novelId: String, index: Int) = "reader/$novelId/$index"

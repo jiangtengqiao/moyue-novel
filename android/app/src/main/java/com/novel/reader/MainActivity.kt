@@ -127,6 +127,24 @@ fun MoYueNavGraph(
                         popUpTo(Routes.READER) { inclusive = true }
                     }
                 },
+                onChapterList = { novelId ->
+                    navController.navigate(Routes.chapterList(novelId))
+                },
+            )
+        }
+
+        composable(
+            Routes.CHAPTER_LIST,
+            arguments = listOf(navArgument("novelId") { type = NavType.StringType }),
+        ) { entry ->
+            ChapterListScreen(
+                novelId = entry.arguments?.getString("novelId") ?: "",
+                onBack = { navController.popBackStack() },
+                onChapterClick = { novelId, index ->
+                    navController.navigate(Routes.reader(novelId, index)) {
+                        popUpTo(Routes.CHAPTER_LIST) { inclusive = true }
+                    }
+                },
             )
         }
 
@@ -216,6 +234,19 @@ fun MoYueNavGraph(
                 onUpload = { id -> navController.navigate(Routes.uploadNovel(id)) },
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable(Routes.READING_HISTORY) {
+            ReadingHistoryScreen(
+                onBack = { navController.popBackStack() },
+                onNovelClick = { novelId, chapterIndex ->
+                    navController.navigate(Routes.reader(novelId, chapterIndex))
+                }
+            )
+        }
+
+        composable(Routes.SETTINGS) {
+            SettingsScreen(navController = navController)
         }
     }
 }

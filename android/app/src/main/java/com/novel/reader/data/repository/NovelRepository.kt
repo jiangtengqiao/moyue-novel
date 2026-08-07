@@ -2,6 +2,7 @@ package com.novel.reader.data.repository
 
 import com.novel.reader.data.api.MoYueApi
 import com.novel.reader.data.api.NovelCreateBody
+import com.novel.reader.data.api.ReadingProgressBody
 import com.novel.reader.data.model.*
 import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -83,7 +84,7 @@ class NovelRepository @Inject constructor(
 
     // ==================== 上传 ====================
 
-    suspend fun uploadSingleFile(novelId: String, file: File): Map<String, Any?> {
+    suspend fun uploadSingleFile(novelId: String, file: File): UploadSingleResponse {
         val reqBody = file.asRequestBody("application/octet-stream".toMediaTypeOrNull())
         val part = MultipartBody.Part.createFormData("file", file.name, reqBody)
         return api.uploadSingleFile(token(), novelId, part)
@@ -106,4 +107,11 @@ class NovelRepository @Inject constructor(
     suspend fun getLatestAnnouncements() = api.getLatestAnnouncements()
 
     suspend fun checkUpdate(currentVersion: String) = api.checkUpdate(currentVersion)
+
+    // ==================== 阅读历史 ====================
+
+    suspend fun saveReadingProgress(novelId: String, chapterIndex: Int, chapterTitle: String) =
+        api.saveReadingProgress(token(), novelId, ReadingProgressBody(chapterIndex, chapterTitle))
+
+    suspend fun getReadingHistory() = api.getReadingHistory(token())
 }

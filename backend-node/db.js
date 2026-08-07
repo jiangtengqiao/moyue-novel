@@ -30,6 +30,8 @@ async function initDB() {
   const fs = require('fs');
   const sql = fs.readFileSync(require('path').join(__dirname, 'schema.sql'), 'utf8');
   await pool.query(sql);
+  // 补充 reading_histories 缺失的 chapter_title 列
+  try { await pool.query('ALTER TABLE reading_histories ADD COLUMN IF NOT EXISTS chapter_title TEXT'); } catch(e) {}
 }
 
 async function seedData() {

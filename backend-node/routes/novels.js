@@ -131,6 +131,37 @@ router.patch('/:id/featured', authMiddleware, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// 保存阅读进度
+router.post('/:id/history', authMiddleware, async (req, res, next) => {
+  try {
+    const { chapter_index, chapter_title } = req.body;
+    const existing = await pool.query('SELECT id FROM reading_histories WHERE user_id = $1 AND novel_id = $2', [req.userId, req.params.id]);
+    if (existing.rows.length > 0) {
+      await pool.query('UPDATE reading_histories SET chapter_index = $1, chapter_title = $2, updated_at = NOW() WHERE user_id = $3 AND novel_id = $4',
+        [chapter_index || 0, chapter_title || '', req.userId, req.params.id]);
+    } else {
+      await pool.query('INSERT INTO reading_histories (id, user_id, novel_id, chapter_index, chapter_title) VALUES ($1, $2, $3, $4, $5)',
+        [crypto.randomUUID(), req.userId, req.params.id, chapter_index || 0, chapter_title || '']);
+    }
+    res.json({ message: 'ok', success: true });
+  } catch (e) { next(e); }
+});
+
+// 阅读历史列表
+router.get('/reading-history/list', authMiddleware, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT h.id, h.user_id, h.novel_id, h.chapter_index, h.chapter_title, h.updated_at,
+       n.title as novel_title, n.author as novel_author, n.cover_url
+       FROM reading_histories h
+       INNER JOIN novels n ON h.novel_id = n.id
+       WHERE h.user_id = $1 ORDER BY h.updated_at DESC LIMIT 50`,
+      [req.userId]
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+});
+
 // 章节子路由
 router.use('/:novelId/chapters', require('./chapters'));
 
