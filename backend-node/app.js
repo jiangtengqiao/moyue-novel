@@ -8,9 +8,11 @@ const app = express();
 app.use(cors());
 
 // 内联 JSON body 解析（兼容旧版 Express，不依赖 body-parser）
+// 注意：multipart/form-data 必须跳过，交由 multer 处理
 app.use((req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'DELETE') return next();
   const ct = req.headers['content-type'] || '';
+  if (ct.indexOf('multipart/form-data') >= 0) return next();
   let data = '';
   req.on('data', chunk => { data += chunk; });
   req.on('end', () => {
