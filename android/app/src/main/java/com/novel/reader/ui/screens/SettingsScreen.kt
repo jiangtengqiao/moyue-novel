@@ -16,8 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -290,7 +288,7 @@ fun SettingsScreen(
                         )
                     }
                     Icon(
-                        if (historyExpanded) Icons.AutoMirrored.Outlined.KeyboardArrowUp else Icons.AutoMirrored.Outlined.KeyboardArrowDown,
+                        if (historyExpanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
@@ -555,7 +553,7 @@ private fun UpdateLogCard(
                 }
                 Spacer(Modifier.weight(1f))
                 Icon(
-                    if (expanded) Icons.AutoMirrored.Outlined.KeyboardArrowUp else Icons.AutoMirrored.Outlined.KeyboardArrowDown,
+                    if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
