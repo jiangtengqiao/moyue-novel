@@ -181,6 +181,9 @@ interface MoYueApi {
     @GET("api/update/check")
     suspend fun checkUpdate(@Query("current_version") currentVersion: String): UpdateCheckResponse
 
+    @GET("api/update/history")
+    suspend fun getVersionHistory(@Query("limit") limit: Int = 50): VersionHistoryResponse
+
     @Streaming
     @GET("api/update/download")
     suspend fun downloadApk(): okhttp3.ResponseBody

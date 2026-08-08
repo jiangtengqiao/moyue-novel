@@ -126,6 +126,8 @@ class NovelRepository @Inject constructor(
 
     suspend fun checkUpdate(currentVersion: String) = api.checkUpdate(currentVersion)
 
+    suspend fun getVersionHistory(limit: Int = 50) = api.getVersionHistory(limit)
+
     // ==================== 阅读历史 ====================
 
     suspend fun saveReadingProgress(novelId: String, chapterIndex: Int, chapterTitle: String) =

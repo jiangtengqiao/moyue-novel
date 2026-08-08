@@ -188,6 +188,23 @@ data class UpdateCheckResponse(
     val message: String = "",
 )
 
+@Serializable
+data class VersionHistoryItem(
+    @SerialName("version_name") val versionName: String,
+    @SerialName("version_code") val versionCode: Int,
+    @SerialName("update_title") val updateTitle: String? = null,
+    @SerialName("update_log") val updateLog: String = "",
+    @SerialName("force_update") val forceUpdate: Boolean = false,
+    @SerialName("is_active") val isActive: Boolean = true,
+    @SerialName("created_at") val createdAt: String? = null,
+)
+
+@Serializable
+data class VersionHistoryResponse(
+    val total: Int = 0,
+    val versions: List<VersionHistoryItem> = emptyList(),
+)
+
 /**
  * 上传任务
  */

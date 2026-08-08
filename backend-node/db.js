@@ -97,7 +97,17 @@ async function seedData() {
   if (verCheck.rows.length === 0) {
     await pool.query(`INSERT INTO app_versions (id, version_name, version_code, download_url, update_title, update_log, force_update, is_active, min_supported_version)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [crypto.randomUUID(), '1.0.0', 1, '/api/update/download', '墨阅小说 v1.0.0', '首个正式版本', false, true, '1.0.0']);
+      [crypto.randomUUID(), '1.0.0', 1, '/api/update/download', '墨阅小说 v1.0.0 首发版',
+        '墨阅小说首个正式版本发布\n小说阅读与创作一体化平台\n支持小说分类浏览与搜索\n章节阅读器基础功能\n用户注册登录与创作者入驻\n小说上传与章节管理\n公告与系统通知', false, true, '1.0.0']);
+  }
+
+  // v1.1.0 版本记录（幂等）
+  const ver110Check = await pool.query("SELECT id FROM app_versions WHERE version_name = '1.1.0'");
+  if (ver110Check.rows.length === 0) {
+    await pool.query(`INSERT INTO app_versions (id, version_name, version_code, download_url, update_title, update_log, force_update, is_active, min_supported_version)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [crypto.randomUUID(), '1.1.0', 2, '/api/update/download', '墨阅小说 v1.1.0 功能完善版',
+        '新增章节目录页：支持搜索、序号、字数显示与快速跳转\n阅读器夜间模式：提供4种背景色切换\n字体大小持久化：通过 DataStore 保存阅读偏好\n阅读器设置面板：字号、行距、背景一站式调节\n章节列表入口：阅读时可直接查看目录\n阅读边界检查：首末章节智能禁用翻页\n设置界面完善：GitHub 仓库、问题反馈、评分、检查更新、退出登录\n阅读历史功能：后端 API 与前端展示打通\n修复上传文件错误：Map<String, Any?> 替换为 UploadSingleResponse 数据类\n读者与创作者权益体系优化', false, true, '1.0.0']);
   }
 
   // 清除所有旧示例数据（用户主动要求删除预设书籍）

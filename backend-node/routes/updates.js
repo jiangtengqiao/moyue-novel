@@ -31,6 +31,22 @@ router.get('/check', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// 历史版本列表（折叠日志用）
+router.get('/history', async (req, res, next) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const { rows } = await pool.query(
+      `SELECT version_name, version_code, update_title, update_log, force_update, is_active, created_at
+       FROM app_versions
+       WHERE is_active = TRUE
+       ORDER BY version_code DESC
+       LIMIT $1`,
+      [limit]
+    );
+    res.json({ total: rows.length, versions: rows });
+  } catch (e) { next(e); }
+});
+
 router.get('/download', async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM app_versions WHERE is_active = TRUE ORDER BY version_code DESC LIMIT 1');
