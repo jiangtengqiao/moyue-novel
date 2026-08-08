@@ -221,6 +221,38 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // 法律与协议
+            SectionTitle("法律与协议")
+            SettingsCard(
+                icon = Icons.Outlined.Description,
+                title = "用户服务协议",
+                subtitle = "查看完整服务条款",
+                onClick = { navController.navigate(Routes.agreement("user")) },
+            )
+            Spacer(Modifier.height(8.dp))
+            SettingsCard(
+                icon = Icons.Outlined.PrivacyTip,
+                title = "隐私政策",
+                subtitle = "了解我们如何保护您的隐私",
+                onClick = { navController.navigate(Routes.agreement("privacy")) },
+            )
+            Spacer(Modifier.height(8.dp))
+            SettingsCard(
+                icon = Icons.Outlined.Group,
+                title = "社区规范",
+                subtitle = "共同维护社区秩序",
+                onClick = { navController.navigate(Routes.agreement("community")) },
+            )
+            Spacer(Modifier.height(8.dp))
+            SettingsCard(
+                icon = Icons.Outlined.Copyright,
+                title = "版权声明",
+                subtitle = "版权保护与侵权处理",
+                onClick = { navController.navigate(Routes.agreement("copyright")) },
+            )
+
+            Spacer(Modifier.height(24.dp))
+
             // 账号
             SectionTitle("账号")
             SettingsCard(

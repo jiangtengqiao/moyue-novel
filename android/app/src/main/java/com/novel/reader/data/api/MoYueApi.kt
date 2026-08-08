@@ -60,6 +60,12 @@ interface MoYueApi {
         @Body body: NovelUpdateBody,
     ): Novel
 
+    @DELETE("api/novels/{id}")
+    suspend fun deleteNovel(
+        @Header("Authorization") token: String,
+        @Path("id") id: String,
+    ): MessageResponse
+
     @POST("api/novels/{id}/bookmark")
     suspend fun toggleBookmark(
         @Header("Authorization") token: String,
@@ -188,6 +194,17 @@ data class NovelCreateBody(
     val description: String = "",
     val tags: List<String> = emptyList(),
     val status: String = "ongoing",
+)
+
+@kotlinx.serialization.Serializable
+data class NovelUpdateBody(
+    val title: String,
+    val author: String,
+    @kotlinx.serialization.SerialName("category_id") val categoryId: String? = null,
+    val description: String = "",
+    val tags: List<String> = emptyList(),
+    val status: String = "ongoing",
+    @kotlinx.serialization.SerialName("cover_url") val coverUrl: String? = null,
 )
 
 @kotlinx.serialization.Serializable

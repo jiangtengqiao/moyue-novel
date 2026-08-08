@@ -20,7 +20,7 @@ router.get('/', async (req, res, next) => {
     const sort = req.query.sort || 'latest';
     const keyword = req.query.keyword;
     
-    let where = ["status = 'published'"];
+    let where = ["status IN ('published','ongoing')"];
     let params = [];
     let idx = 1;
     if (category) { where.push(`category_id = (SELECT id FROM categories WHERE name = $${idx})`); params.push(category); idx++; }
@@ -51,7 +51,7 @@ router.get('/featured', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// 搜索
+// 搜索（包含已发布和连载中，让创作者能搜到自己的作品）
 router.get('/search', async (req, res, next) => {
   try {
     const keyword = req.query.keyword;
@@ -59,8 +59,8 @@ router.get('/search', async (req, res, next) => {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const pageSize = 20;
     const { rows } = await pool.query(
-      'SELECT id, title, author, cover_url, description, status, word_count, chapter_count, view_count, rating FROM novels WHERE (title ILIKE $1 OR author ILIKE $1) AND status = $2 ORDER BY view_count DESC LIMIT $3 OFFSET $4',
-      [`%${keyword}%`, 'published', pageSize, (page - 1) * pageSize]
+      "SELECT id, title, author, cover_url, description, status, word_count, chapter_count, view_count, rating FROM novels WHERE (title ILIKE $1 OR author ILIKE $1) AND status IN ('published','ongoing') ORDER BY view_count DESC LIMIT $2 OFFSET $3",
+      [`%${keyword}%`, pageSize, (page - 1) * pageSize]
     );
     res.json({ total: rows.length, page, page_size: pageSize, items: rows });
   } catch (e) { next(e); }
@@ -159,6 +159,37 @@ router.get('/reading-history/list', authMiddleware, async (req, res, next) => {
       [req.userId]
     );
     res.json(rows);
+  } catch (e) { next(e); }
+});
+
+// 删除小说（创作者只能删除自己的）
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const creatorRow = await pool.query('SELECT id FROM creators WHERE user_id = $1 AND status = $2', [req.userId, 'active']);
+    if (creatorRow.rows.length === 0) return res.status(403).json({ message: '不是创作者' });
+    const novel = await pool.query('SELECT id, creator_id FROM novels WHERE id = $1', [req.params.id]);
+    if (novel.rows.length === 0) return res.status(404).json({ message: '小说不存在' });
+    if (novel.rows[0].creator_id !== creatorRow.rows[0].id) return res.status(403).json({ message: '无权删除他人作品' });
+    await pool.query('DELETE FROM novels WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: '已删除' });
+  } catch (e) { next(e); }
+});
+
+// 更新小说（创作者编辑自己的作品）
+router.put('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const creatorRow = await pool.query('SELECT id FROM creators WHERE user_id = $1 AND status = $2', [req.userId, 'active']);
+    if (creatorRow.rows.length === 0) return res.status(403).json({ message: '不是创作者' });
+    const novel = await pool.query('SELECT id, creator_id FROM novels WHERE id = $1', [req.params.id]);
+    if (novel.rows.length === 0) return res.status(404).json({ message: '小说不存在' });
+    if (novel.rows[0].creator_id !== creatorRow.rows[0].id) return res.status(403).json({ message: '无权编辑他人作品' });
+    const { title, author, description, tags, category_id, status, cover_url } = req.body;
+    await pool.query(
+      'UPDATE novels SET title=$1, author=$2, description=$3, tags=$4, category_id=$5, status=$6, cover_url=$7, updated_at=NOW() WHERE id=$8',
+      [title, author, description || '', JSON.stringify(tags || []), category_id || null, status || 'ongoing', cover_url || null, req.params.id]
+    );
+    const updated = (await pool.query('SELECT * FROM novels WHERE id = $1', [req.params.id])).rows[0];
+    res.json(updated);
   } catch (e) { next(e); }
 });
 

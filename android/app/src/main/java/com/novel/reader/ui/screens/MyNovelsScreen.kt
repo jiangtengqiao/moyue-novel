@@ -41,6 +41,9 @@ class MyNovelsViewModel @Inject constructor(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading
 
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message
+
     init { load() }
 
     fun load() {
@@ -53,6 +56,16 @@ class MyNovelsViewModel @Inject constructor(
             _loading.value = false
         }
     }
+
+    fun deleteNovel(novel: NovelBrief) {
+        viewModelScope.launch {
+            try {
+                repository.deleteNovel(novel.id)
+                _novels.value = _novels.value.filter { it.id != novel.id }
+                _message.value = "已删除：${novel.title}"
+            } catch (e: Exception) { _message.value = "删除失败：${e.message}" }
+        }
+    }
 }
 
 @Composable
@@ -60,10 +73,12 @@ fun MyNovelsScreen(
     viewModel: MyNovelsViewModel = hiltViewModel(),
     onNovelClick: (String) -> Unit,
     onUpload: (String) -> Unit,
+    onEditNovel: (String) -> Unit,
     onBack: () -> Unit,
 ) {
     val novels by viewModel.novels.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val message by viewModel.message.collectAsState()
 
     Column(
         modifier = Modifier
@@ -75,10 +90,12 @@ fun MyNovelsScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回")
-            }
-            Text("我的作品", style = MaterialTheme.typography.titleLarge, fontFamily = FontFamily.Serif)
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回") }
+            Text("我的作品", style = MaterialTheme.typography.titleLarge, fontFamily = FontFamily.Serif, modifier = Modifier.weight(1f))
+        }
+
+        message?.let {
+            Text(it, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = if (it.startsWith("已删除")) StatusSuccess else MaterialTheme.colorScheme.error)
         }
 
         if (loading) {
@@ -86,15 +103,11 @@ fun MyNovelsScreen(
         } else if (novels.isEmpty()) {
             EmptyState("还没有作品\n去创建你的第一部作品吧", Modifier.fillMaxSize())
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            ) {
+            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
                 items(novels) { novel ->
+                    var showActions by remember { mutableStateOf(false) }
                     Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clip(RoundedCornerShape(12.dp)),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)),
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 1.dp,
                     ) {
@@ -106,8 +119,20 @@ fun MyNovelsScreen(
                                     Spacer(Modifier.height(4.dp))
                                     Text("${novel.viewCount}阅读  ${novel.rating}评分", style = MaterialTheme.typography.labelSmall, color = AccentGold)
                                 }
-                                IconButton(onClick = { onUpload(novel.id) }) {
-                                    Icon(Icons.Outlined.Upload, contentDescription = "上传", tint = AccentGold)
+                                IconButton(onClick = { showActions = !showActions }) {
+                                    Icon(Icons.Outlined.MoreVert, contentDescription = "更多")
+                                }
+                            }
+                            if (showActions) {
+                                Spacer(Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    AssistChip(onClick = { onUpload(novel.id) }, label = { Text("上传章节") }, leadingIcon = { Icon(Icons.Outlined.Upload, null, modifier = Modifier.size(16.dp)) })
+                                    AssistChip(onClick = { onEditNovel(novel.id) }, label = { Text("编辑信息") }, leadingIcon = { Icon(Icons.Outlined.Edit, null, modifier = Modifier.size(16.dp)) })
+                                    AssistChip(
+                                        onClick = { viewModel.deleteNovel(novel) },
+                                        label = { Text("删除") },
+                                        leadingIcon = { Icon(Icons.Outlined.Delete, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error) },
+                                    )
                                 }
                             }
                         }

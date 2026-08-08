@@ -168,6 +168,20 @@ fun MoYueNavGraph(
             )
         }
 
+        composable(
+            Routes.AGREEMENT,
+            arguments = listOf(navArgument("type") { type = NavType.StringType }),
+        ) { entry ->
+            val type = entry.arguments?.getString("type") ?: "user"
+            val (title, file) = when (type) {
+                "privacy" -> "隐私政策" to "privacy_policy.txt"
+                "community" -> "社区规范" to "community_guidelines.txt"
+                "copyright" -> "版权声明" to "copyright_notice.txt"
+                else -> "用户服务协议" to "user_agreement.txt"
+            }
+            AgreementScreen(title = title, fileName = file, onBack = { navController.popBackStack() })
+        }
+
         composable(Routes.SEARCH) {
             SearchScreen(
                 onBack = { navController.popBackStack() },
@@ -252,6 +266,7 @@ fun MoYueNavGraph(
             MyNovelsScreen(
                 onNovelClick = { id -> navController.navigate(Routes.novelDetail(id)) },
                 onUpload = { id -> navController.navigate(Routes.uploadNovel(id)) },
+                onEditNovel = { id -> navController.navigate(Routes.novelDetail(id)) },
                 onBack = { navController.popBackStack() }
             )
         }

@@ -2,6 +2,7 @@ package com.novel.reader.data.repository
 
 import com.novel.reader.data.api.MoYueApi
 import com.novel.reader.data.api.NovelCreateBody
+import com.novel.reader.data.api.NovelUpdateBody
 import com.novel.reader.data.api.ReadingProgressBody
 import com.novel.reader.data.api.ChapterCreateBody
 import com.novel.reader.data.model.*
@@ -60,6 +61,12 @@ class NovelRepository @Inject constructor(
     suspend fun createNovel(title: String, author: String, description: String, tags: List<String>): Novel {
         return api.createNovel(token(), NovelCreateBody(title, author, description = description, tags = tags))
     }
+
+    suspend fun updateNovel(id: String, title: String, author: String, description: String, tags: List<String>, status: String = "ongoing"): Novel {
+        return api.updateNovel(token(), id, NovelUpdateBody(title, author, description = description, tags = tags, status = status))
+    }
+
+    suspend fun deleteNovel(id: String) = api.deleteNovel(token(), id)
 
     suspend fun toggleBookmark(novelId: String) = api.toggleBookmark(token(), novelId)
 
